@@ -21,7 +21,7 @@ class OpenStax::Content::Fragment::Exercise < OpenStax::Content::Fragment
 
   # This code is run from lib/openstax/cnx/v1/page.rb during import
   def self.absolutize_exercise_urls!(node)
-    uri = OpenStax::Exercises::V1.uri_for('/api/exercises')
+    uri = Addressable::URI.parse OpenStax::Content.exercises_search_api_url
 
     node.css(EXERCISE_EMBED_URL_CSS).each do |anchor|
       href = anchor.attribute('href')

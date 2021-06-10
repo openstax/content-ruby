@@ -34,11 +34,10 @@ RSpec.describe OpenStax::Content::Fragment::Exercise, vcr: VCR_OPTS do
          </div>"
       )
     ).at_css('a')
-    expected_url = OpenStax::Exercises::V1.uri_for('/api/exercises').tap do |uri|
-      uri.query_values = { q: 'tag:"some-tag"' }
-    end.to_s
 
-    expect(absolutized_node['href']).to eq expected_url
+    expected_uri = Addressable::URI.parse('https://exercises.openstax.org/api/exercises')
+    expected_uri.query_values = { q: 'tag:"some-tag"' }
+    expect(absolutized_node['href']).to eq expected_uri.to_s
     expect(absolutized_node['data-type']).to eq 'exercise'
   end
 
@@ -50,11 +49,10 @@ RSpec.describe OpenStax::Content::Fragment::Exercise, vcr: VCR_OPTS do
          </div>"
       )
     ).at_css('a')
-    expected_url = OpenStax::Exercises::V1.uri_for('/api/exercises').tap do |uri|
-      uri.query_values = { q: 'nickname:"Some Nickname"' }
-    end.to_s
 
-    expect(absolutized_node['href']).to eq expected_url
+    expected_uri = Addressable::URI.parse('https://exercises.openstax.org/api/exercises')
+    expected_uri.query_values = { q: 'nickname:"Some Nickname"' }
+    expect(absolutized_node['href']).to eq expected_uri.to_s
     expect(absolutized_node['data-type']).to eq 'exercise'
   end
 end

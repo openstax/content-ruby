@@ -1,5 +1,6 @@
 require 'rspec/retry'
 require 'net/http'
+require 'byebug'
 
 require 'vcr_helper'
 
@@ -131,6 +132,7 @@ OpenStax::Content.configure do |config|
   config.archive_path = 'apps/archive'
   config.bucket_name = ENV.fetch 'OPENSTAX_CONTENT_BUCKET_NAME', 'not-a-real-bucket'
   config.domain = 'openstax.org'
+  config.exercises_search_api_url = 'https://exercises.openstax.org/api/exercises'
   config.logger = Logger.new STDOUT, level: :error
   config.s3_region = ENV.fetch 'OPENSTAX_CONTENT_S3_REGION', 'us-east-1'
   config.s3_access_key_id = ENV.fetch 'OPENSTAX_CONTENT_S3_ACCESS_KEY_ID', 'not-a-real-key'

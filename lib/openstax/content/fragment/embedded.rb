@@ -26,6 +26,10 @@ class OpenStax::Content::Fragment::Embedded < OpenStax::Content::Fragment::Html
   self.iframe_classes = ['os-embed']
   self.iframe_title = ''
 
+  CLASS_ATTRIBUTES.each do |class_attribute|
+    define_method(class_attribute) { self.class.send class_attribute }
+  end
+
   attr_reader :url, :width, :height
 
   def initialize(node:, title: nil, labels: nil)
@@ -41,11 +45,11 @@ class OpenStax::Content::Fragment::Embedded < OpenStax::Content::Fragment::Html
 
     url_node = @node.at_css(TAGGED_URL_CSS) || @node.css(UNTAGGED_URL_CSS).last
 
-    @width = url_node.try(:[], 'width') || default_width
-    @height = url_node.try(:[], 'height') || default_height
-    @url = url_node.try(:[], 'src') || url_node.try(:[], 'href')
+    @width = url_node&.[]('width') || default_width
+    @height = url_node&.[]('height') || default_height
+    @url = url_node&.[]('src') || url_node&.[]('href')
 
-    if url_node.try(:name) == 'iframe'
+    if url_node&.name == 'iframe'
       node_classes = url_node['class'].to_s.split(' ') + iframe_classes
       url_node['class'] = node_classes.uniq.join(' ')
       url_node['title'] ||= iframe_title

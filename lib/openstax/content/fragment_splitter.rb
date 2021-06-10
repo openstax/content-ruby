@@ -40,7 +40,7 @@ class OpenStax::Content::FragmentSplitter
     # Flatten, remove empty nodes and transform remaining nodes into reading fragments
     result.map do |obj|
       next obj unless obj.is_a?(Nokogiri::XML::Node)
-      next if obj.content.nil? || obj.content.empty?
+      next if obj.content.nil? || obj.content.strip.empty?
 
       OpenStax::Content::Fragment::Reading.new node: obj, reference_view_url: reference_view_url
     end.compact.tap do |result|

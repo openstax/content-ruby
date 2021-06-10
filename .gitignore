@@ -16,6 +16,9 @@
 # Ignore Byebug command history file.
 .byebug_history
 
+# RSpec last failures
+.rspec_last_failures
+
 ## Specific to RubyMotion:
 .dat*
 .repl_history
