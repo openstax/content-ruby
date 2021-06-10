@@ -1,4 +1,5 @@
 require 'vcr'
+require 'spec_helper'
 
 VCR::Configuration.class_exec do
   # Reference: https://github.com/vcr/vcr/blob/master/lib/vcr/configuration.rb#L225
