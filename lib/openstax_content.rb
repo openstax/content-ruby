@@ -11,4 +11,4 @@ module OpenStax
   end
 end
 
-Dir["#{__dir__}/content/**/*.rb"].each { |file| require file }
+Dir["#{__dir__}/openstax/content/**/*.rb"].each { |file| require file }
