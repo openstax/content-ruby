@@ -112,8 +112,10 @@ OpenStax::Content.configure do |config|
   config.exercises_search_api_url = 'https://exercises.openstax.org/api/exercises'
   config.logger = Logger.new STDOUT, level: :error
   config.s3_region = ENV.fetch 'OPENSTAX_CONTENT_S3_REGION', 'us-east-1'
-  config.s3_access_key_id = ENV.fetch 'OPENSTAX_CONTENT_S3_ACCESS_KEY_ID', 'not-a-real-key'
-  config.s3_secret_access_key = ENV.fetch 'OPENSTAX_CONTENT_S3_SECRET_ACCESS_KEY', 'not-a-real-key'
+  recording = ENV.fetch('VCR_OPTS_RECORD', 'none') != 'none'
+  default_key = recording ? nil : 'not-a-real-key'
+  config.s3_access_key_id = ENV.fetch 'OPENSTAX_CONTENT_S3_ACCESS_KEY_ID', default_key
+  config.s3_secret_access_key = ENV.fetch 'OPENSTAX_CONTENT_S3_SECRET_ACCESS_KEY', default_key
 end
 
 MINI_BOOK_PAGE_HASHES = [
