@@ -48,6 +48,10 @@ class OpenStax::Content::Archive
     if uri.path.start_with?('../')
       uri.path = uri.path.sub('..', '')
       "#{base_url}#{uri.to_s}"
+    elsif uri.path.start_with?(OpenStax::Content.archive_path) ||
+          uri.path.start_with?("/#{OpenStax::Content.archive_path}")
+      uri.path.start_with?('/') ? "https://#{OpenStax::Content.domain}#{uri.to_s}" :
+                                  "https://#{OpenStax::Content.domain}/#{uri.to_s}"
     else
       uri.path = "#{uri.path.chomp('.json').chomp('.xhtml')}.json"
 

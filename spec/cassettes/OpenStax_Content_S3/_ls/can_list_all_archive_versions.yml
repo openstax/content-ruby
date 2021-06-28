@@ -1,0 +1,53 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://<bucket_name>.s3.amazonaws.com/?delimiter=/&list-type=2&prefix=<archive_path>/
+    body:
+      encoding: UTF-8
+      string: ''
+    headers:
+      Content-Type:
+      - ''
+      Accept-Encoding:
+      - ''
+      User-Agent:
+      - aws-sdk-ruby3/3.114.2 ruby/2.7.2 x86_64-linux aws-sdk-s3/1.96.1
+      X-Amz-Date:
+      - 20210623T191006Z
+      X-Amz-Security-Token:
+      - "<X-Amz-Security-Token 1>"
+      X-Amz-Content-Sha256:
+      - e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      Authorization:
+      - "<Authorization 1>"
+      Content-Length:
+      - '0'
+      Accept:
+      - "*/*"
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      X-Amz-Id-2:
+      - "<X-Amz-Id-2 1>"
+      X-Amz-Request-Id:
+      - "<X-Amz-Request-Id 1>"
+      Date:
+      - Wed, 23 Jun 2021 19:10:07 GMT
+      X-Amz-Bucket-Region:
+      - "<s3_region>"
+      Content-Type:
+      - application/xml
+      Transfer-Encoding:
+      - chunked
+      Server:
+      - AmazonS3
+    body:
+      encoding: UTF-8
+      string: |-
+        <?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name><bucket_name></Name><Prefix><archive_path>/</Prefix><KeyCount>8</KeyCount><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>false</IsTruncated><CommonPrefixes><Prefix><archive_path>/20200827.155539/</Prefix></CommonPrefixes><CommonPrefixes><Prefix><archive_path>/20201014.233724/</Prefix></CommonPrefixes><CommonPrefixes><Prefix><archive_path>/20201029.133542/</Prefix></CommonPrefixes><CommonPrefixes><Prefix><archive_path>/20201222.172624/</Prefix></CommonPrefixes><CommonPrefixes><Prefix><archive_path>/20210224.204120/</Prefix></CommonPrefixes><CommonPrefixes><Prefix><archive_path>/20210325.214454/</Prefix></CommonPrefixes><CommonPrefixes><Prefix><archive_path>/20210421.141058/</Prefix></CommonPrefixes><CommonPrefixes><Prefix><archive_path>/20210514.171726/</Prefix></CommonPrefixes></ListBucketResult>
+  recorded_at: Wed, 23 Jun 2021 19:10:06 GMT
+recorded_with: VCR 6.0.0
