@@ -105,4 +105,29 @@ class OpenStax::Content::Archive
       slug
     end
   end
+
+  def webview_uri_for(page)
+    uri = if page.is_a?(Addressable::URI)
+      page
+    else
+      begin
+        Addressable::URI.parse page
+      rescue Addressable::URI::InvalidURIError
+        begin
+          Addressable::URI.parse "/#{page}"
+        rescue Addressable::URI::InvalidURIError
+          OpenStax::Content.logger.warn { "Invalid page url: \"#{page}\"" }
+
+          return page
+        end
+      end
+    end
+    object = uri.path.split('/').last
+    book_id, page_id = object.split(':', 2)
+    page_uuid = page_id.split('@', 2).first
+    book_slug = slug book_id
+    page_slug = slug object
+    uri.path = "books/#{book_slug}/pages/#{page_slug}"
+    Addressable::URI.join "https://#{OpenStax::Content.domain}", uri
+  end
 end
