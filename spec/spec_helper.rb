@@ -105,7 +105,7 @@ end
 RSpec::Matchers.define_negated_matcher :not_change, :change
 
 OpenStax::Content.configure do |config|
-  config.abl_url = 'https://raw.githubusercontent.com/openstax/content-manager-approved-books/master/approved-book-list.json'
+  config.abl_url = 'https://raw.githubusercontent.com/openstax/content-manager-approved-books/main/approved-book-list.json'
   config.archive_path = 'apps/archive'
   config.bucket_name = ENV.fetch 'OPENSTAX_CONTENT_BUCKET_NAME', 'not-a-real-bucket'
   config.domain = 'openstax.org'
