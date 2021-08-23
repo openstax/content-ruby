@@ -25,7 +25,7 @@ class OpenStax::Content::Fragment::Html < OpenStax::Content::Fragment
       true
     else
       node_without_title = node.dup
-      node_without_title.search('[data-type="document-title"]').remove
+      node_without_title.css('[data-type="document-title"]').remove
       node_without_title.text.blank?
     end
   end
