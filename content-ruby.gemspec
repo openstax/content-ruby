@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
 
   gem.files = Dir['lib/**/*'] + [ 'LICENSE', 'README.md' ]
 
+  gem.add_dependency 'activesupport'
   gem.add_dependency 'aws-sdk-s3'
   gem.add_dependency 'faraday'
   gem.add_dependency 'nokogiri'

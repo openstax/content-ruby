@@ -1,3 +1,4 @@
+require 'active_support/core_ext/object/blank'
 require 'addressable/uri'
 
 require_relative '../fragment'
@@ -17,12 +18,20 @@ class OpenStax::Content::Fragment::Html < OpenStax::Content::Fragment
     super.except('node')
   end
 
-  def html?
-    !to_html.empty?
+  def blank?
+    return @blank unless @blank.nil?
+
+    @blank = if to_html.blank?
+      true
+    else
+      node_without_title = node.dup
+      node_without_title.search('[data-type="document-title"]').remove
+      node_without_title.text.blank?
+    end
   end
 
-  def blank?
-    !html?
+  def html?
+    !blank?
   end
 
   def node

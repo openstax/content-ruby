@@ -51,4 +51,12 @@ RSpec.describe OpenStax::Content::Fragment::Reading, vcr: VCR_OPTS do
     expect(body.at_css('[href="#test"]')).to be_nil
     expect(body.at_css("[href=\"#{reference_view_url}#test\"]")).not_to be_nil
   end
+
+  it 'returns blank? == true for fragments containing only a title' do
+    node = Nokogiri::HTML.fragment 'References'
+    title_only_node = Nokogiri::HTML.fragment "<body><div class=\"os-eoc os-references-container\" data-type=\"composite-page\" data-uuid-key=\".references\" id=\"composite-page-6\">\n<h2 data-type=\"document-title\"><span class=\"os-text\">References</span></h2>\n\n</div></body>"
+
+    expect(described_class.new node: node).not_to be_blank
+    expect(described_class.new node: title_only_node).to be_blank
+  end
 end
