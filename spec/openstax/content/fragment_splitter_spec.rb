@@ -137,4 +137,27 @@ RSpec.describe OpenStax::Content::FragmentSplitter, vcr: VCR_OPTS do
       end
     end
   end
+
+  context 'excluded content' do
+    let(:reading_processing_instructions) do
+      [
+        {
+          css: '.section-summary, .key-terms, .review-questions, .discussion-questions,' +
+               '.case-questions, .suggested-resources, .references, .figure-credits',
+          fragments: []
+        }
+      ]
+    end
+    let(:excluded_content) do
+      <<~EOS
+        <div class=\"os-eoc os-section-summary-container\" data-type=\"composite-page\" data-uuid-key=\".section-summary\" id=\"composite-page-2\"><h2 data-type=\"document-title\"><span class=\"os-text\">Summary</span></h2><section data-depth=\"1\" id=\"fs-idm326738544\" class=\"section-summary\"><a href=\"./d380510e-6145-4625-b19a-4fa68204b6b1@12.7:d51e5dbd-ff69-4828-a882-9c6e8a940365.xhtml#0\" data-page-slug=\"1-1-entrepreneurship-today\" data-page-uuid=\"d51e5dbd-ff69-4828-a882-9c6e8a940365\" data-page-fragment=\"0\"><h3 data-type=\"document-title\" id=\"0_copy_1\"><span class=\"os-number\">1.1</span><span class=\"os-divider\"> </span><span data-type=\"\" itemprop=\"\" class=\"os-text\">Entrepreneurship Today</span></h3></a>\n<p id=\"fs-idm343555472\" class=\" \">An entrepreneur is someone who takes on an entrepreneurial venture to create something new that solves a problem; small business ownership and franchising are also entrepreneurial options. The venture could be for profit or not for profit, depending on the problem it intends to solve. Entrepreneurs can remain in a full-time job while pursuing their ideas on the side, in order to mitigate risk. On the opposite end of the spectrum, entrepreneurs can take on lifestyle ventures and become serial entrepreneurs. There are many factors driving the growth of entrepreneurship, including employment instability, motivation to create something new, financial factors and free time associated with retirement, and the greater acceptance of entrepreneurship as a career choice. The cultures of nations around the world affect the ability for entrepreneurs to start a venture, making the United States a leader in entrepreneurial innovation. Entrepreneurs often find inspiration in social, environmental, and economic issues.</p>\n</section><section data-depth=\"1\" id=\"fs-idm351936432\" class=\"section-summary\"><a href=\"./d380510e-6145-4625-b19a-4fa68204b6b1@12.7:7ccc54a5-2430-429f-b74e-c94732f87418.xhtml#0\" data-page-slug=\"1-2-entrepreneurial-vision-and-goals\" data-page-uuid=\"7ccc54a5-2430-429f-b74e-c94732f87418\" data-page-fragment=\"0\"><h3 data-type=\"document-title\" id=\"0_copy_10\"><span class=\"os-number\">1.2</span><span class=\"os-divider\"> </span><span data-type=\"\" itemprop=\"\" class=\"os-text\">Entrepreneurial Vision and Goals</span></h3></a>\n<p id=\"fs-idm327774096\" class=\" \">Establishing an entrepreneurial vision helps you describe what you want your venture to become in the future. For most entrepreneurial ventures, the vision also includes the harvesting or selling of the venture. There are creative ways, such as brainstorming and divergent thinking, as well as investigative ways to define an entrepreneurial vision. Once you have established your vision, it is important to write goals to help you realize the steps toward making your vision a reality.</p>\n</section><section data-depth=\"1\" id=\"fs-idm400249200\" class=\"section-summary\"><a href=\"./d380510e-6145-4625-b19a-4fa68204b6b1@12.7:eca9a0ef-7ef7-47d3-abaf-ce21ce92452d.xhtml#0\" data-page-slug=\"1-3-the-entrepreneurial-mindset\" data-page-uuid=\"eca9a0ef-7ef7-47d3-abaf-ce21ce92452d\" data-page-fragment=\"0\"><h3 data-type=\"document-title\" id=\"0_copy_11\"><span class=\"os-number\">1.3</span><span class=\"os-divider\"> </span><span data-type=\"\" itemprop=\"\" class=\"os-text\">The Entrepreneurial Mindset</span></h3></a>\n<p id=\"fs-idm368257280\" class=\" \">Identifying new possibilities, solving problems, and improving the quality of life on our planet are all important aspects of entrepreneurship. The entrepreneurial mindset allows an entrepreneur to view the world as full of possibilities. Entrepreneurial passion and spirit help entrepreneurs overcome obstacles to achieve their goals. Disruptive technologies involve using existing technology in new ways and can provide new opportunities as well as new challenges. Entrepreneurship is transforming some industries and potentially creating others, though many entrepreneurs create value by starting small businesses, buying franchises, or introducing new services in mature industries. The key thing to remember is that anyone can be an entrepreneur and that new technologies are making the cost of starting a new business less costly, but still risky at some level.</p>\n</section></div>
+      EOS
+    end
+    let(:node) { Nokogiri::HTML.fragment excluded_content }
+
+    it 'produces no fragments if reading processing instructions exclude all non-title content' do
+      fragment_splitter = described_class.new reading_processing_instructions, reference_view_url
+      expect(fragment_splitter.split_into_fragments(node)).to eq []
+    end
+  end
 end
