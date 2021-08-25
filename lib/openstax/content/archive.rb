@@ -28,10 +28,6 @@ class OpenStax::Content::Archive
     end
 
     if uri.absolute?
-      OpenStax::Content.logger.warn do
-        "#{self.class.name} received an unexpected absolute URL in url_for: \"#{object}\""
-      end
-
       # Force absolute URLs to be https
       uri.scheme = 'https'
       return uri.to_s
