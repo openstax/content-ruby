@@ -12,9 +12,11 @@ class OpenStax::Content::Fragment::Html < OpenStax::Content::Fragment
     @to_html = @node.to_html
   end
 
-  def as_json(*args)
-    # Don't attempt to serialize @node (it would fail)
-    super.except('node')
+  # Serialization methods use #instance_variables to iterate through and dump all instance variables
+  # Nokogiri classes are not serializable, so we do not want to dump the @node variable
+  # Instead, we recreate it by parsing the HTML again if needed
+  def instance_variables
+    super - [ :@node ]
   end
 
   def blank?
