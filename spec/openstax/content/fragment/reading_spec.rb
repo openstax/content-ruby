@@ -59,4 +59,8 @@ RSpec.describe OpenStax::Content::Fragment::Reading, vcr: VCR_OPTS do
     expect(described_class.new node: node).not_to be_blank
     expect(described_class.new node: title_only_node).to be_blank
   end
+
+  it 'does not write @node when serializing to yaml' do
+    reading_fragments.each { |fragment| expect(fragment.to_yaml).not_to include('node: ') }
+  end
 end
