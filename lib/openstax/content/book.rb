@@ -1,14 +1,16 @@
 require_relative 'book_part'
 
 class OpenStax::Content::Book
-  attr_reader :archive, :uuid, :version
+  attr_reader :archive, :uuid, :version, :slug, :style
 
-  def initialize(archive:, uuid:, version:, url: nil, hash: nil)
+  def initialize(archive:, uuid:, version:, url: nil, hash: nil, slug: nil, style: nil)
     @archive = archive
     @uuid = uuid
     @version = version
     @url = url
     @hash = hash
+    @slug = slug
+    @style = style
   end
 
   def url
