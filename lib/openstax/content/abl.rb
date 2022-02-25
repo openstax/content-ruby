@@ -1,3 +1,6 @@
+require_relative 'archive'
+require_relative 'book'
+
 class OpenStax::Content::Abl
   def initialize(url: nil, body: nil)
     @url = url

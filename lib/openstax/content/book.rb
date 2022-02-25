@@ -1,4 +1,3 @@
-require_relative 'archive'
 require_relative 'book_part'
 
 class OpenStax::Content::Book
