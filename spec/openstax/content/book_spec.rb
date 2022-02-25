@@ -12,7 +12,7 @@ RSpec.describe OpenStax::Content::Book do
   end
 
   it "provides info about the book with the given id" do
-    expect(book.archive_version).to eq archive_version
+    expect(book.archive.version).to eq archive_version
     expect(book.uuid).to eq book_uuid
     expect(book.version).to eq book_version
     expect(book.hash).not_to be_empty

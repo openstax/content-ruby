@@ -12,7 +12,7 @@ class OpenStax::Content::Abl
   end
 
   def body
-    @body ||= JSON.parse(Faraday.get(url).body).deep_symbolize_keys
+    @body ||= JSON.parse(Faraday.get(url).body, symbolize_names: true)
   end
 
   def latest_version_by_collection_id
@@ -57,7 +57,7 @@ class OpenStax::Content::Abl
             OpenStax::Content::Book.new(
               archive: archive,
               uuid: book[:uuid],
-              version: version[:commit_sha].first(7)
+              version: version[:commit_sha][0..6]
             )
           end
         end
