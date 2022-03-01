@@ -1,6 +1,8 @@
 require_relative 'book_part'
 
 class OpenStax::Content::Book
+  extend Forwardable
+
   attr_reader :archive, :uuid, :version, :slug, :style
 
   def initialize(archive:, uuid:, version:, url: nil, hash: nil, slug: nil, style: nil)
@@ -48,4 +50,6 @@ class OpenStax::Content::Book
   def root_book_part
     @root_book_part ||= OpenStax::Content::BookPart.new(hash: tree, is_root: true, book: self)
   end
+
+  def_delegator :root_book_part, :all_pages
 end

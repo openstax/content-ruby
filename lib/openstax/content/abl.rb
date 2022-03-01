@@ -2,22 +2,29 @@ require_relative 'archive'
 require_relative 'book'
 
 class OpenStax::Content::Abl
-  def initialize(url: nil, body: nil)
+  def initialize(url: nil)
     @url = url
-    @body = body
   end
 
   def url
     @url ||= OpenStax::Content.abl_url
   end
 
-  def body
-    @body ||= JSON.parse(Faraday.get(url).body, symbolize_names: true)
+  def body_string
+    @body_string ||= Faraday.get(url).body
+  end
+
+  def body_hash
+    @body_hash ||= JSON.parse(body_string, symbolize_names: true)
+  end
+
+  def digest
+    Digest::SHA256.hexdigest body_string
   end
 
   def latest_approved_version_by_collection_id(archive: OpenStax::Content::Archive.new)
     {}.tap do |hash|
-      body[:approved_versions].each do |version|
+      body_hash[:approved_versions].each do |version|
         next if version[:min_code_version] > archive.version
 
         existing_version = hash[version[:collection_id]]
@@ -35,7 +42,7 @@ class OpenStax::Content::Abl
     # Can be removed once we have no more CNX books
     version_by_collection_id = latest_approved_version_by_collection_id(archive: archive)
 
-    body[:approved_books].flat_map do |approved_book|
+    body_hash[:approved_books].flat_map do |approved_book|
       if approved_book[:versions].nil?
         # CNX-hosted book
         version = version_by_collection_id[approved_book[:collection_id]]

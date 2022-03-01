@@ -44,4 +44,10 @@ class OpenStax::Content::BookPart
       end
     end
   end
+
+  def all_pages
+    @pages ||= parts.flat_map do |part|
+      part.is_a?(OpenStax::Content::Page) ? [ part ] : part.all_pages
+    end
+  end
 end
