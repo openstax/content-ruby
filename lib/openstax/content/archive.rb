@@ -2,14 +2,22 @@ require 'addressable/uri'
 require 'faraday'
 
 class OpenStax::Content::Archive
-  def initialize(version)
+  def initialize(version: nil)
     @version = version
     @slugs = {}
   end
 
+  def s3
+    @s3 ||= OpenStax::Content::S3.new
+  end
+
+  def version
+    @version ||= s3.ls.last
+  end
+
   def base_url
     @base_url ||= "https://#{OpenStax::Content.domain}/#{
-                  OpenStax::Content.archive_path}/#{@version}"
+                  OpenStax::Content.archive_path}/#{version}"
   end
 
   def url_for(object)
@@ -72,20 +80,16 @@ class OpenStax::Content::Archive
     end
   end
 
-  def s3
-    @s3 ||= OpenStax::Content::S3.new
-  end
-
   def add_latest_book_version_if_missing(object)
     book_id, page_id = object.split(':', 2)
     book_uuid, book_version = book_id.split('@', 2)
     return object unless book_version.nil? && s3.bucket_configured?
 
-    s3.ls(@version).each do |book|
-      uuid, version = book.split('@')
-      next unless uuid == book_uuid
+    s3.ls(version).each do |book|
+      s3_uuid, s3_version = book.split('@')
+      next unless s3_uuid == book_uuid
 
-      book_version = version
+      book_version = s3_version
       break
     end
 

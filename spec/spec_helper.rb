@@ -157,8 +157,12 @@ MINI_BOOK_HASH = {
   }
 }
 MINI_BOOK_ARCHIVE_VERSION = '20210514.171726'
+MINI_BOOK_ARCHIVE = OpenStax::Content::Archive.new version: MINI_BOOK_ARCHIVE_VERSION
 MINI_BOOK = OpenStax::Content::Book.new(
-  archive_version: MINI_BOOK_ARCHIVE_VERSION, hash: MINI_BOOK_HASH
+  archive: MINI_BOOK_ARCHIVE,
+  uuid: MINI_BOOK_HASH['id'],
+  version: MINI_BOOK_HASH['version'],
+  hash: MINI_BOOK_HASH
 )
 
 HS_PHYSICS_READING_PROCESSING_INSTRUCTIONS = [

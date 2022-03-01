@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'vcr_helper'
 
 RSpec.describe OpenStax::Content::Archive, vcr: VCR_OPTS do
-  subject(:archive)          { described_class.new MINI_BOOK_ARCHIVE_VERSION }
+  subject(:archive)          { described_class.new version: MINI_BOOK_ARCHIVE_VERSION }
   let(:expected_base_url)    { 'https://openstax.org' }
   let(:expected_archive_url) { "#{expected_base_url}/apps/archive/#{MINI_BOOK_ARCHIVE_VERSION}" }
 

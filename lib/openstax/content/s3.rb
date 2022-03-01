@@ -1,12 +1,13 @@
 require 'aws-sdk-s3'
 
 class OpenStax::Content::S3
-  def initialize
+  def initialize(bucket_name: nil)
+    @bucket_name = bucket_name
     @ls = Hash.new { |hash, key| hash[key] = Hash.new { |hash, key| hash[key] = {} } }
   end
 
   def bucket_name
-    OpenStax::Content.bucket_name
+    @bucket_name ||= OpenStax::Content.bucket_name
   end
 
   def bucket_configured?
