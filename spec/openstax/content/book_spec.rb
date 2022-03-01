@@ -11,7 +11,7 @@ RSpec.describe OpenStax::Content::Book do
     }/#{archive_version}/contents/#{book_uuid}@#{book_version}.json"
   end
 
-  it "provides info about the book with the given id" do
+  it 'provides info about the book with the given id' do
     expect(book.archive.version).to eq archive_version
     expect(book.uuid).to eq book_uuid
     expect(book.version).to eq book_version
@@ -20,5 +20,11 @@ RSpec.describe OpenStax::Content::Book do
     expect(book.title).to be_a(String)
     expect(book.tree).not_to be_nil
     expect(book.root_book_part).to be_a OpenStax::Content::BookPart
+  end
+
+  it 'delegates all_pages to root_book_part' do
+    all_pages = [ OpenStax::Content::Page.new(hash: MINI_BOOK_PAGE_HASHES.first) ]
+    expect(book.root_book_part).to receive(:all_pages).and_return(all_pages)
+    expect(book.all_pages).to eq all_pages
   end
 end

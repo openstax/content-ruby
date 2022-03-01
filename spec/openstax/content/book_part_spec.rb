@@ -51,4 +51,11 @@ RSpec.describe OpenStax::Content::BookPart do
       expect(book_part.parts.map(&:class)).to eq expected_part_classes[index]
     end
   end
+
+  it 'can recursively return all of its pages' do
+    book_hashes.each_with_index do |book_hash, index|
+      book_part = described_class.new hash: book_hash
+      expect(book_part.all_pages.map(&:class)).to eq [ OpenStax::Content::Page ] * 3
+    end
+  end
 end

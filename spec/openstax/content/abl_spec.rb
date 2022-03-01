@@ -10,4 +10,8 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
 
     approved_books.each { |book| expect(book).to be_a(OpenStax::Content::Book) }
   end
+
+  it "can return the ABL's digest" do
+    expect(abl.digest).to eq '860d671a8364af86cda7bf29d98899d4df567f60e8b6f26297adfac1122e045c'
+  end
 end
