@@ -32,7 +32,7 @@ class OpenStax::Content::Page
     node.at_css(feature_id_css)
   end
 
-  def initialize(book: nil, hash: {}, uuid: nil, url: nil, title: nil, content: nil)
+  def initialize(book: nil, hash: {}, uuid: nil, url: nil, title: nil, slug: nil, content: nil)
     @uuid    = uuid || hash['id']&.split('@', 2)&.first
     raise ArgumentError, 'Either uuid or hash with id key is required' if @uuid.nil?
 
@@ -40,11 +40,12 @@ class OpenStax::Content::Page
     @hash    = hash
     @url     = url
     @title   = title || hash['title']
+    @slug    = slug || hash['slug']
     @content = content
   end
 
   attr_accessor :chapter_section
-  attr_reader :uuid, :hash
+  attr_reader :uuid, :hash, :slug
 
   def book
     raise ArgumentError, 'Book was not specified' if @book.nil?
