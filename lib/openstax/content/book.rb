@@ -19,12 +19,12 @@ class OpenStax::Content::Book
     @url ||= archive.url_for "#{uuid}@#{version}"
   end
 
-  def hash
-    @hash ||= archive.json url
-  end
-
   def url_fragment
     @url_fragment ||= url.chomp('.json')
+  end
+
+  def hash
+    @hash ||= archive.json url
   end
 
   def baked

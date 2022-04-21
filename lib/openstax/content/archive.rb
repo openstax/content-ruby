@@ -11,13 +11,20 @@ class OpenStax::Content::Archive
     @s3 ||= OpenStax::Content::S3.new
   end
 
+  def versions
+    @versions ||= s3.ls.reverse
+  end
+
   def version
-    @version ||= s3.ls.last
+    @version || versions.first
+  end
+
+  def previous_version
+    versions[versions.index(version) + 1]
   end
 
   def base_url
-    @base_url ||= "https://#{OpenStax::Content.domain}/#{
-                  OpenStax::Content.archive_path}/#{version}"
+    @base_url ||= "https://#{OpenStax::Content.domain}/#{OpenStax::Content.archive_path}/#{version}"
   end
 
   def url_for(object)
