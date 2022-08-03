@@ -71,7 +71,9 @@ class OpenStax::Content::Abl
               uuid: book[:uuid],
               version: version[:commit_sha][0..6],
               slug: book[:slug],
-              style: book[:style]
+              style: book[:style],
+              min_code_version: version[:min_code_version],
+              committed_at: commit_metadata[:committed_at]
             )
           end
         end
