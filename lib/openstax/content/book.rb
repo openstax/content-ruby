@@ -1,3 +1,4 @@
+require 'forwardable'
 require_relative 'book_part'
 
 class OpenStax::Content::Book
