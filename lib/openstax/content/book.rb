@@ -1,11 +1,15 @@
+require 'forwardable'
 require_relative 'book_part'
 
 class OpenStax::Content::Book
   extend Forwardable
 
-  attr_reader :archive, :uuid, :version, :slug, :style
+  attr_reader :archive, :uuid, :version, :slug, :style, :min_code_version, :committed_at
 
-  def initialize(archive:, uuid:, version:, url: nil, hash: nil, slug: nil, style: nil)
+  def initialize(
+    archive:, uuid:, version:,
+    url: nil, hash: nil, slug: nil, style: nil, min_code_version: nil, committed_at: nil
+  )
     @archive = archive
     @uuid = uuid
     @version = version
@@ -13,6 +17,12 @@ class OpenStax::Content::Book
     @hash = hash
     @slug = slug
     @style = style
+    @min_code_version = min_code_version
+    @committed_at = committed_at
+  end
+
+  def valid?
+    min_code_version.nil? || min_code_version <= archive.version
   end
 
   def url
