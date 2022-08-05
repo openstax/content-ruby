@@ -27,4 +27,13 @@ RSpec.describe OpenStax::Content::Book do
     expect(book.root_book_part).to receive(:all_pages).and_return(all_pages)
     expect(book.all_pages).to eq all_pages
   end
+
+  it 'knows if the version plus archive version combination is valid or not' do
+    expect(book).to be_valid
+    book.instance_variable_set('@min_code_version', MINI_BOOK_ARCHIVE_VERSION)
+    expect(book).to be_valid
+    new_time = Time.strptime(MINI_BOOK_ARCHIVE_VERSION, '%Y%m%d.%H%M%S') + 1
+    book.instance_variable_set('@min_code_version', new_time.strftime('%Y%m%d.%H%M%S'))
+    expect(book).not_to be_valid
+  end
 end
