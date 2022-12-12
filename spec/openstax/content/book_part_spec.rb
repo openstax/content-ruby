@@ -33,7 +33,8 @@ RSpec.describe OpenStax::Content::BookPart do
       }
     ]
   end
-  let(:expected_part_classes) { [ [ described_class ], [ OpenStax::Content::Page ] * 3 ] }
+  let(:expected_child_classes)     { [ [ described_class ], [ OpenStax::Content::Page ] * 3 ] }
+  let(:expected_book_part_classes) { [ [ OpenStax::Content::BookPart ], [] ] }
 
   it 'provides info about the book part for the given hash 'do
     book_hashes.each do |book_hash|
@@ -48,7 +49,14 @@ RSpec.describe OpenStax::Content::BookPart do
   it 'can retrieve its children parts' do
     book_hashes.each_with_index do |book_hash, index|
       book_part = described_class.new hash: book_hash
-      expect(book_part.parts.map(&:class)).to eq expected_part_classes[index]
+      expect(book_part.parts.map(&:class)).to eq expected_child_classes[index]
+    end
+  end
+
+  it 'can recursively return all of its book parts' do
+    book_hashes.each_with_index do |book_hash, index|
+      book_part = described_class.new hash: book_hash
+      expect(book_part.all_book_parts.map(&:class)).to eq expected_book_part_classes[index]
     end
   end
 

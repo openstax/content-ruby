@@ -61,8 +61,6 @@ class OpenStax::Content::Book
     @root_book_part ||= OpenStax::Content::BookPart.new(hash: tree, is_root: true, book: self)
   end
 
-  def_delegator :root_book_part, :all_pages
-
   def with_previous_archive_version_fallback(&block)
     raise ArgumentError, 'no block given' if block.nil?
     raise ArgumentError, 'given block must accept the book as its first argument' if block.arity == 0
@@ -91,4 +89,6 @@ class OpenStax::Content::Book
       end
     end
   end
+
+  def_delegators :root_book_part, :all_book_parts, :all_pages
 end
