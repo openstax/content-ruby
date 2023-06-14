@@ -45,6 +45,12 @@ class OpenStax::Content::BookPart
     end
   end
 
+  def all_book_parts
+    @all_book_parts ||= parts.flat_map do |part|
+      part.is_a?(OpenStax::Content::BookPart) ? [ part ] + part.all_book_parts : []
+    end
+  end
+
   def all_pages
     @all_pages ||= parts.flat_map do |part|
       part.is_a?(OpenStax::Content::Page) ? [ part ] : part.all_pages
