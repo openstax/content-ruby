@@ -105,7 +105,7 @@ end
 RSpec::Matchers.define_negated_matcher :not_change, :change
 
 OpenStax::Content.configure do |config|
-  config.abl_url = 'https://raw.githubusercontent.com/openstax/content-manager-approved-books/main/approved-book-list.json'
+  config.abl_url = 'https://corgi.ce.openstax.org/api/abl/'
   config.archive_path = 'apps/archive'
   config.bucket_name = ENV.fetch 'OPENSTAX_CONTENT_BUCKET_NAME', 'not-a-real-bucket'
   config.domain = 'openstax.org'
@@ -157,9 +157,8 @@ MINI_BOOK_HASH = {
   }
 }
 MINI_BOOK_ARCHIVE_VERSION = '20210514.171726'
-MINI_BOOK_ARCHIVE = OpenStax::Content::Archive.new version: MINI_BOOK_ARCHIVE_VERSION
 MINI_BOOK = OpenStax::Content::Book.new(
-  archive: MINI_BOOK_ARCHIVE,
+  code_version: MINI_BOOK_ARCHIVE_VERSION,
   uuid: MINI_BOOK_HASH['id'],
   version: MINI_BOOK_HASH['version'],
   hash: MINI_BOOK_HASH
