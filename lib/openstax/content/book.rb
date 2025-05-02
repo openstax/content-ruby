@@ -4,20 +4,16 @@ require_relative 'book_part'
 class OpenStax::Content::Book
   extend Forwardable
 
-  attr_reader :archive, :uuid, :version, :slug, :style, :min_code_version, :committed_at
+  attr_reader :archive, :uuid, :version, :slug, :min_code_version, :committed_at
 
-  def initialize(
-    archive:, uuid:, version:,
-    url: nil, hash: nil, slug: nil, style: nil, min_code_version: nil, committed_at: nil
-  )
+  def initialize(archive:, uuid:, version:, url: nil, hash: nil, min_code_version: nil, slug: nil, committed_at: nil)
     @archive = archive
     @uuid = uuid
     @version = version
     @url = url
     @hash = hash
-    @slug = slug
-    @style = style
     @min_code_version = min_code_version
+    @slug = slug
     @committed_at = committed_at
   end
 
@@ -59,35 +55,6 @@ class OpenStax::Content::Book
 
   def root_book_part
     @root_book_part ||= OpenStax::Content::BookPart.new(hash: tree, is_root: true, book: self)
-  end
-
-  def with_previous_archive_version_fallback(&block)
-    raise ArgumentError, 'no block given' if block.nil?
-    raise ArgumentError, 'given block must accept the book as its first argument' if block.arity == 0
-
-    book = self
-
-    loop do
-      begin
-        return block.call book
-      rescue StandardError => exception
-        # Sometimes books in the ABL fail to load
-        # Retry with an earlier version of archive, if possible
-        previous_archive_version = book.archive.previous_version
-        raise exception if previous_archive_version.nil?
-
-        book = OpenStax::Content::Book.new(
-          archive: OpenStax::Content::Archive.new(version: previous_archive_version),
-          uuid: book.uuid,
-          version: book.version,
-          slug: book.slug,
-          style: book.style,
-          min_code_version: book.min_code_version,
-          committed_at: book.committed_at
-        )
-        raise exception unless book.valid?
-      end
-    end
   end
 
   def_delegators :root_book_part, :all_book_parts, :all_pages

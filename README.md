@@ -26,45 +26,11 @@ s3_access_key_id and s3_secret_access_key are optional (you can use AWS instance
 
 ## Usage
 
-### Approved Book List (to get approved books and approved versions)
+### Approved Book List (to get books and page slugs)
 ```rb
 abl = OpenStax::Content::Abl.new
-approved_books = abl.approved_books
-approved_versions = abl.approved_versions
-```
-
-### S3 Bucket Listing (to get latest archive and book versions)
-```rb
-s3 = OpenStax::Content::S3.new
-if s3.bucket_configured?
-  latest_archive_version = s3.ls.last
-  latest_book_ids = s3.ls latest_archive_version
-  chosen_book = latest_book_ids.sample
-  book_uuid, book_version = chosen_book.split('@', 2)
-  book = OpenStax::Content::Book.new(
-    archive_version: latest_archive_version, uuid: book_uuid, version: book_version
-  )
-end
-```
-
-### Archive (to create archive links, load content and get book and page slugs)
-```rb
-archive = OpenStax::Content::Archive.new latest_archive_version
-
-book_id = "#{book_uuid}@#{book_version}"
-page_id = "#{book_id}:#{page_uuid}"
-
-book_url = archive.url_for book_id
-page_url = archive.url_for page_id
-
-book_json = archive.fetch book_id
-page_json = archive.fetch page_id
-
-book_hash = archive.json book_id
-page_hash = archive.json page_id
-
-book_slug = archive.slug book_id # or book_uuid
-page_slug = archive.slug page_id # or "#{book_uuid}:#{page_uuid}"
+books = abl.books
+slugs = abl.slugs_by_page_uuid
 ```
 
 ### Fragment Splitter (to split pages and create interactive readings)

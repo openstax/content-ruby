@@ -1,4 +1,5 @@
 require 'nokogiri'
+require 'ostruct'
 require_relative 'fragment/reading'
 require_relative 'custom_css'
 
@@ -76,7 +77,7 @@ class OpenStax::Content::FragmentSplitter
     args = { node: node, labels: labels }
     args[:reference_view_url] = reference_view_url \
       if fragment_class.is_a? OpenStax::Content::Fragment::Reading
-    fragment = fragment_class.new args
+    fragment = fragment_class.new **args
     fragment unless fragment.blank?
   end
 

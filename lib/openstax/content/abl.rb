@@ -2,6 +2,10 @@ require_relative 'archive'
 require_relative 'book'
 
 class OpenStax::Content::Abl
+  # Check back this many archive versions
+  # If there are more than this number of archive versions still building, errors will happen
+  DEFAULT_MAX_ARCHIVE_ATTEMPTS = 5
+
   def initialize(url: nil)
     @url = url
   end
@@ -14,70 +18,85 @@ class OpenStax::Content::Abl
     @body_string ||= Faraday.get(url).body
   end
 
-  def body_hash
-    @body_hash ||= JSON.parse(body_string, symbolize_names: true)
+  def body_array
+    @body_array ||= JSON.parse(body_string, symbolize_names: true)
   end
 
   def digest
     Digest::SHA256.hexdigest body_string
   end
 
-  def latest_approved_version_by_collection_id(archive: OpenStax::Content::Archive.new)
-    {}.tap do |hash|
-      body_hash[:approved_versions].each do |version|
-        next if version[:min_code_version] > archive.version
-
-        existing_version = hash[version[:collection_id]]
-
-        next if !existing_version.nil? &&
-                (existing_version[:content_version].split('.').map(&:to_i) <=>
-                 version[:content_version].split('.').map(&:to_i)) >= 0
-
-        hash[version[:collection_id]] = version
-      end
+  def books(archive: OpenStax::Content::Archive.new)
+    body_array.filter { |book| book[:code_version] <= archive.version }.map do |book|
+      OpenStax::Content::Book.new(
+        archive: archive,
+        uuid: book[:uuid],
+        version: book[:commit_sha][0..6],
+        min_code_version: book[:code_version],
+        slug: book[:slug],
+        committed_at: book[:committed_at]
+      )
     end
   end
 
-  def approved_books(archive: OpenStax::Content::Archive.new)
-    # Can be removed once we have no more CNX books
-    version_by_collection_id = latest_approved_version_by_collection_id(archive: archive)
+  def each_book_with_previous_archive_version_fallback(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS, &block)
+    raise ArgumentError, 'no block given' if block.nil?
+    raise ArgumentError, 'given block must accept the book as its first argument' if block.arity == 0
 
-    body_hash[:approved_books].flat_map do |approved_book|
-      if approved_book[:versions].nil?
-        # CNX-hosted book
-        version = version_by_collection_id[approved_book[:collection_id]]
+    books = OpenStax::Content::Abl.new.books
+    attempt = 1
 
-        next [] if version.nil?
+    until books.empty?
+      previous_version = nil
+      previous_archive = nil
+      retry_books = []
 
-        approved_book[:books].map do |book|
-          OpenStax::Content::Book.new(
-            archive: archive,
-            uuid: book[:uuid],
-            version: version[:content_version].sub('1.', ''),
-            slug: book[:slug],
-            style: approved_book[:style]
-          )
-        end
-      else
-        # Git-hosted book
-        approved_book[:versions].flat_map do |version|
-          next [] if version[:min_code_version] > archive.version
+      books.each do |book|
+        begin
+          block.call book
+        rescue StandardError => exception
+          raise exception if attempt >= max_attempts
 
-          commit_metadata = version[:commit_metadata]
+          # Sometimes books in the latest archive fails to load (when the new version is still building)
+          # Retry with an earlier version of archive, if possible
+          previous_version ||= book.archive.previous_version
 
-          commit_metadata[:books].map do |book|
-            OpenStax::Content::Book.new(
-              archive: archive,
-              uuid: book[:uuid],
-              version: version[:commit_sha][0..6],
-              slug: book[:slug],
-              style: book[:style],
-              min_code_version: version[:min_code_version],
-              committed_at: commit_metadata[:committed_at]
+          if previous_version.nil?
+            # There are no more earlier archive versions
+            raise exception
+          else
+            previous_archive ||= OpenStax::Content::Archive.new version: previous_version
+
+            retry_book = OpenStax::Content::Book.new(
+              archive: previous_archive,
+              uuid: book.uuid,
+              version: book.version,
+              slug: book.slug,
+              min_code_version: book.min_code_version,
+              committed_at: book.committed_at
             )
+
+            # If the book requires an archive version that hasn't finished building yet, don't include it
+            retry_books << retry_book if retry_book.valid?
           end
         end
       end
+
+      books = retry_books
+      attempt += 1
+    end
+  end
+
+  def slugs_by_page_uuid(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS)
+    @slugs_by_page_uuid ||= {}.tap do |hash|
+      each_book_with_previous_archive_version_fallback(max_attempts: max_attempts) do |book|
+        book.all_pages.each do |page|
+          hash[page.uuid] ||= []
+          hash[page.uuid] << { book: book.slug, page: page.slug }
+        end
+      end
+
+      hash.each { |uuid, slugs| slugs.uniq! }
     end
   end
 end
