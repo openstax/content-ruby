@@ -25,4 +25,31 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
   it 'can return a map of all page slugs by uuid' do
     expect(abl.slugs_by_page_uuid.size).to eq(24385)
   end
+
+  it 'sets partial_data to true when a book fails to process', vcr: { cassette_name: 'OpenStax_Content_Abl/can_return_a_map_of_all_page_slugs_by_uuid' } do
+    # Stub to make one book fail during all_pages processing
+    allow_any_instance_of(OpenStax::Content::Book).to receive(:all_pages).and_wrap_original do |method, *args|
+      # Fail for the first book encountered
+      if @first_book_processed
+        method.call(*args)
+      else
+        @first_book_processed = true
+        raise StandardError, 'Simulated archive error'
+      end
+    end
+
+    # Expect a warning to be logged
+    expect(OpenStax::Content::logger).to receive(:warn).at_least(:once)
+    # Should start as false
+    expect(abl.partial_data).to be false
+
+    result = abl.slugs_by_page_uuid
+
+    # Should still return results (from other books that succeeded)
+    expect(result).to be_a(Hash)
+    expect(result).not_to be_empty
+
+    # Should mark data as partial
+    expect(abl.partial_data).to be true
+  end
 end

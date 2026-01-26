@@ -6,8 +6,11 @@ class OpenStax::Content::Abl
   # If there are more than this number of archive versions still building, errors will happen
   DEFAULT_MAX_ARCHIVE_ATTEMPTS = 5
 
+  attr_reader :partial_data
+
   def initialize(url: nil)
     @url = url
+    @partial_data = false
   end
 
   def url
@@ -89,10 +92,19 @@ class OpenStax::Content::Abl
 
   def slugs_by_page_uuid(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS)
     @slugs_by_page_uuid ||= {}.tap do |hash|
+      @partial_data = false
       each_book_with_previous_archive_version_fallback(max_attempts: max_attempts) do |book|
-        book.all_pages.each do |page|
-          hash[page.uuid] ||= []
-          hash[page.uuid] << { book: book.slug, page: page.slug }
+        begin
+          book.all_pages.each do |page|
+            hash[page.uuid] ||= []
+            hash[page.uuid] << { book: book.slug, page: page.slug }
+          end
+        rescue StandardError => exception
+          @partial_data = true
+          OpenStax::Content::logger.warn do
+            "Failed to process slugs for book: #{book.uuid}. " \
+            "Error: #{exception.class}: #{exception.message}"
+          end
         end
       end
 
