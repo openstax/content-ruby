@@ -42,35 +42,33 @@ class OpenStax::Content::Abl
     end
   end
 
-  def each_book_with_previous_archive_version_fallback(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS, &block)
+  def each_book_with_previous_archive_version_fallback(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS, allow_partial_data: true, &block)
     raise ArgumentError, 'no block given' if block.nil?
     raise ArgumentError, 'given block must accept the book as its first argument' if block.arity == 0
 
     books = OpenStax::Content::Abl.new.books
-    attempt = 1
+    @partial_data = false
 
-    until books.empty?
+    books.each do |book|
+      attempt = 1
       previous_version = nil
       previous_archive = nil
-      retry_books = []
-
-      books.each do |book|
+      while attempt <= max_attempts
         begin
           block.call book
+          break
         rescue StandardError => exception
-          raise exception if attempt >= max_attempts
-
-          # Sometimes books in the latest archive fails to load (when the new version is still building)
-          # Retry with an earlier version of archive, if possible
-          previous_version ||= book.archive.previous_version
-
-          if previous_version.nil?
-            # There are no more earlier archive versions
-            raise exception
+          previous_version = book.archive.previous_version
+          if previous_version.nil? or attempt >= max_attempts
+            raise exception unless allow_partial_data
+            @partial_data = true
+            OpenStax::Content::logger.warn do
+              "Failed to process slugs for book: #{book.uuid}. " \
+              "Error: #{exception.class}: #{exception.message}"
+            end
           else
-            previous_archive ||= OpenStax::Content::Archive.new version: previous_version
-
-            retry_book = OpenStax::Content::Book.new(
+            previous_archive = OpenStax::Content::Archive.new version: previous_version
+            book = OpenStax::Content::Book.new(
               archive: previous_archive,
               uuid: book.uuid,
               version: book.version,
@@ -78,33 +76,19 @@ class OpenStax::Content::Abl
               min_code_version: book.min_code_version,
               committed_at: book.committed_at
             )
-
-            # If the book requires an archive version that hasn't finished building yet, don't include it
-            retry_books << retry_book if retry_book.valid?
           end
+          attempt += 1
         end
       end
-
-      books = retry_books
-      attempt += 1
     end
   end
 
   def slugs_by_page_uuid(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS)
     @slugs_by_page_uuid ||= {}.tap do |hash|
-      @partial_data = false
       each_book_with_previous_archive_version_fallback(max_attempts: max_attempts) do |book|
-        begin
-          book.all_pages.each do |page|
-            hash[page.uuid] ||= []
-            hash[page.uuid] << { book: book.slug, page: page.slug }
-          end
-        rescue StandardError => exception
-          @partial_data = true
-          OpenStax::Content::logger.warn do
-            "Failed to process slugs for book: #{book.uuid}. " \
-            "Error: #{exception.class}: #{exception.message}"
-          end
+        book.all_pages.each do |page|
+          hash[page.uuid] ||= []
+          hash[page.uuid] << { book: book.slug, page: page.slug }
         end
       end
 
