@@ -29,7 +29,7 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
   it 'sets partial_data to true when a book fails to process', vcr: { cassette_name: 'OpenStax_Content_Abl/can_return_a_map_of_all_page_slugs_by_uuid' } do
     archive_version = '20250522.165258'
     allow_any_instance_of(OpenStax::Content::Archive).to receive(:versions).and_wrap_original do |method, *args|
-      ['20250522.165258']
+      [archive_version]
     end
     allow_any_instance_of(OpenStax::Content::Abl).to receive(:books).and_wrap_original do |method, *args|
       archive = OpenStax::Content::Archive.new(version: archive_version)
@@ -73,6 +73,81 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
     expect(result).not_to be_empty
 
     # Should mark data as partial
+    expect(abl.partial_data).to be true
+  end
+
+  it 'sets partial_data to true after exhausting all archive version retries', vcr: { cassette_name: 'OpenStax_Content_Abl/can_return_a_map_of_all_page_slugs_by_uuid' } do
+    # Set up three archive versions to test the retry loop
+    archive_versions = ['20250520.165258', '20250521.165258', '20250522.165258']
+    allow_any_instance_of(OpenStax::Content::Archive).to receive(:versions).and_wrap_original do |method, *args|
+      archive_versions
+    end
+
+    # Stub previous_version to return the appropriate previous version
+    allow_any_instance_of(OpenStax::Content::Archive).to receive(:previous_version).and_wrap_original do |method, *args|
+      archive = method.receiver
+      current_index = archive_versions.index(archive.version)
+      current_index && current_index > 0 ? archive_versions[current_index - 1] : nil
+    end
+
+    # Create two books, each with different UUIDs to ensure proper isolation
+    allow_any_instance_of(OpenStax::Content::Abl).to receive(:books).and_wrap_original do |method, *args|
+      archive = OpenStax::Content::Archive.new(version: archive_versions.last)
+      result = []
+      result << OpenStax::Content::Book.new(
+        archive: archive,
+        uuid: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        version: '1.0',
+        min_code_version: archive_versions.last,
+        slug: 'failing-book',
+        committed_at: '2026-01-21T21:45:57+00:00'
+      )
+      result << OpenStax::Content::Book.new(
+        archive: archive,
+        uuid: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        version: '1.0',
+        min_code_version: archive_versions.last,
+        slug: 'success-book',
+        committed_at: '2026-01-21T21:45:57+00:00'
+      )
+      result
+    end
+
+    attempt_count = {}
+
+    # Stub to make the first book fail for ALL archive versions
+    allow_any_instance_of(OpenStax::Content::Book).to receive(:all_pages).and_wrap_original do |method, *args, &block|
+      book = args[0].is_a?(OpenStax::Content::Book) ? args[0] : method.receiver
+
+      if book.slug == 'failing-book'
+        # Track attempts for this book
+        attempt_count[book.uuid] ||= 0
+        attempt_count[book.uuid] += 1
+        raise StandardError, "Simulated failure for attempt #{attempt_count[book.uuid]}"
+      else
+        # Success book returns fake pages
+        [
+          OpenStruct.new(uuid: 'cccccccc-cccc-cccc-cccc-cccccccccccc', slug: 'success-page-1'),
+          OpenStruct.new(uuid: 'dddddddd-dddd-dddd-dddd-dddddddddddd', slug: 'success-page-2')
+        ]
+      end
+    end
+
+    # Expect warnings to be logged for failed attempts
+    expect(OpenStax::Content::logger).to receive(:warn).at_least(:once)
+
+    # Should start as false
+    expect(abl.partial_data).to be false
+
+    result = abl.slugs_by_page_uuid
+
+    # Should still return results from the successful book
+    expect(result).to be_a(Hash)
+    expect(result).not_to be_empty
+    expect(result['cccccccc-cccc-cccc-cccc-cccccccccccc']).not_to be_nil
+
+    # Should have tried multiple times (initial + retries)
+    expect(attempt_count['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa']).to eq(3)
     expect(abl.partial_data).to be true
   end
 end

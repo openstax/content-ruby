@@ -66,6 +66,7 @@ class OpenStax::Content::Abl
               "Failed to process slugs for book: #{book.uuid}. " \
               "Error: #{exception.class}: #{exception.message}"
             end
+            break
           else
             previous_archive = OpenStax::Content::Archive.new version: previous_version
             book = OpenStax::Content::Book.new(
