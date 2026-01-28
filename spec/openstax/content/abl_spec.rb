@@ -26,11 +26,20 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
     expect(abl.slugs_by_page_uuid.size).to eq(24385)
   end
 
-  it 'sets partial_data to true when a book fails to process', vcr: { cassette_name: 'OpenStax_Content_Abl/can_return_a_map_of_all_page_slugs_by_uuid' } do
+  it 'sets partial_data to true when a book fails to process', vcr: { allow_unused_http_interactions: true } do
     archive_version = '20250522.165258'
+    archive_versions = [archive_version]
     allow_any_instance_of(OpenStax::Content::Archive).to receive(:versions).and_wrap_original do |method, *args|
-      [archive_version]
+      archive_versions
     end
+
+    # Stub previous_version to return the appropriate previous version
+    allow_any_instance_of(OpenStax::Content::Archive).to receive(:previous_version).and_wrap_original do |method, *args|
+      archive = method.receiver
+      current_index = archive_versions.index(archive.version)
+      current_index && current_index > 0 ? archive_versions[current_index - 1] : nil
+    end
+
     allow_any_instance_of(OpenStax::Content::Abl).to receive(:books).and_wrap_original do |method, *args|
       archive = OpenStax::Content::Archive.new(version: archive_version)
       result = []
@@ -76,7 +85,7 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
     expect(abl.partial_data).to be true
   end
 
-  it 'sets partial_data to true after exhausting all archive version retries', vcr: { cassette_name: 'OpenStax_Content_Abl/can_return_a_map_of_all_page_slugs_by_uuid' } do
+  it 'sets partial_data to true after exhausting all archive version retries' do
     # Set up three archive versions to test the retry loop
     archive_versions = ['20250520.165258', '20250521.165258', '20250522.165258']
     allow_any_instance_of(OpenStax::Content::Archive).to receive(:versions).and_wrap_original do |method, *args|
@@ -149,5 +158,33 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
     # Should have tried multiple times (initial + retries)
     expect(attempt_count['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa']).to eq(3)
     expect(abl.partial_data).to be true
+  end
+
+  it 'raises exception when allow_partial_data is false and a book fails' do
+    archive_version = '20250522.165258'
+    allow_any_instance_of(OpenStax::Content::Archive).to receive(:versions).and_wrap_original do |method, *args|
+      [archive_version]
+    end
+    allow_any_instance_of(OpenStax::Content::Abl).to receive(:books).and_wrap_original do |method, *args|
+      archive = OpenStax::Content::Archive.new(version: archive_version)
+      [OpenStax::Content::Book.new(
+        archive: archive,
+        uuid: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+        version: '1.0',
+        min_code_version: archive_version,
+        slug: 'failing-book',
+        committed_at: '2026-01-21T21:45:57+00:00'
+      )]
+    end
+
+    # Stub to make the book always fail
+    allow_any_instance_of(OpenStax::Content::Book).to receive(:all_pages).and_raise(StandardError, 'Test error')
+
+    # Should raise exception when allow_partial_data is false
+    expect do
+      abl.each_book_with_previous_archive_version_fallback(allow_partial_data: false) do |book|
+        book.all_pages
+      end
+    end.to raise_error(StandardError, 'Test error')
   end
 end
