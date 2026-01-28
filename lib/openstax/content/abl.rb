@@ -77,6 +77,7 @@ class OpenStax::Content::Abl
               min_code_version: book.min_code_version,
               committed_at: book.committed_at
             )
+            break unless book.valid?
           end
           attempt += 1
         end

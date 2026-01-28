@@ -107,7 +107,7 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
         archive: archive,
         uuid: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         version: '1.0',
-        min_code_version: archive_versions.last,
+        min_code_version: archive_versions.first,
         slug: 'failing-book',
         committed_at: '2026-01-21T21:45:57+00:00'
       )
@@ -115,7 +115,7 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
         archive: archive,
         uuid: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         version: '1.0',
-        min_code_version: archive_versions.last,
+        min_code_version: archive_versions.first,
         slug: 'success-book',
         committed_at: '2026-01-21T21:45:57+00:00'
       )
