@@ -56,16 +56,17 @@ RSpec.describe OpenStax::Content::Abl, vcr: VCR_OPTS do
       result
     end
     # Stub to make one book fail during all_pages processing
+    first_book_processed = false
     allow_any_instance_of(OpenStax::Content::Book).to receive(:all_pages).and_wrap_original do |method, *args|
       # Fail for the first book encountered
-      if @first_book_processed
+      if first_book_processed
         # Return fake pages for the second book
         [
           OpenStruct.new(uuid: '11111111-1111-1111-1111-111111111111', slug: 'test-page-1'),
           OpenStruct.new(uuid: '22222222-2222-2222-2222-222222222222', slug: 'test-page-2')
         ]
       else
-        @first_book_processed = true
+        first_book_processed = true
         raise StandardError, 'Simulated archive error'
       end
     end

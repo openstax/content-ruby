@@ -59,11 +59,11 @@ class OpenStax::Content::Abl
           break
         rescue StandardError => exception
           previous_version = book.archive.previous_version
-          if previous_version.nil? or attempt >= max_attempts
+          if previous_version.nil? || attempt >= max_attempts
             raise exception unless allow_partial_data
             @partial_data = true
             OpenStax::Content::logger.warn do
-              "Failed to process slugs for book: #{book.uuid}. " \
+              "Failed to process book: #{book.uuid}. " \
               "Error: #{exception.class}: #{exception.message}"
             end
             break
@@ -77,7 +77,16 @@ class OpenStax::Content::Abl
               min_code_version: book.min_code_version,
               committed_at: book.committed_at
             )
-            break unless book.valid?
+            # NOTE: This assumes that subsequent archive versions are invalid
+            # after finding one invalid archive versions
+            unless book.valid?
+              @partial_data = true
+              OpenStax::Content::logger.warn do
+                "Failed to process book: #{book.uuid}. " \
+                "Error: invalid book for archive version #{previous_version}"
+              end
+              break
+            end
           end
           attempt += 1
         end
