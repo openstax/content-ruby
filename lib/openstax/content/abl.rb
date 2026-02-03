@@ -80,6 +80,7 @@ class OpenStax::Content::Abl
             # NOTE: This assumes that subsequent archive versions are invalid
             # after finding one invalid archive versions
             unless book.valid?
+              raise exception unless allow_partial_data
               @partial_data = true
               OpenStax::Content::logger.warn do
                 "Failed to process book: #{book.uuid}. " \
