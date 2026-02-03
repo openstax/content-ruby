@@ -6,8 +6,11 @@ class OpenStax::Content::Abl
   # If there are more than this number of archive versions still building, errors will happen
   DEFAULT_MAX_ARCHIVE_ATTEMPTS = 5
 
+  attr_reader :partial_data
+
   def initialize(url: nil)
     @url = url
+    @partial_data = false
   end
 
   def url
@@ -39,35 +42,34 @@ class OpenStax::Content::Abl
     end
   end
 
-  def each_book_with_previous_archive_version_fallback(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS, &block)
+  def each_book_with_previous_archive_version_fallback(max_attempts: DEFAULT_MAX_ARCHIVE_ATTEMPTS, allow_partial_data: true, &block)
     raise ArgumentError, 'no block given' if block.nil?
     raise ArgumentError, 'given block must accept the book as its first argument' if block.arity == 0
 
     books = OpenStax::Content::Abl.new.books
-    attempt = 1
+    @partial_data = false
 
-    until books.empty?
+    books.each do |book|
+      attempt = 1
       previous_version = nil
       previous_archive = nil
-      retry_books = []
-
-      books.each do |book|
+      while attempt <= max_attempts
         begin
           block.call book
+          break
         rescue StandardError => exception
-          raise exception if attempt >= max_attempts
-
-          # Sometimes books in the latest archive fails to load (when the new version is still building)
-          # Retry with an earlier version of archive, if possible
-          previous_version ||= book.archive.previous_version
-
-          if previous_version.nil?
-            # There are no more earlier archive versions
-            raise exception
+          previous_version = book.archive.previous_version
+          if previous_version.nil? || attempt >= max_attempts
+            raise exception unless allow_partial_data
+            @partial_data = true
+            OpenStax::Content::logger.warn do
+              "Failed to process book: #{book.uuid}. " \
+              "Error: #{exception.class}: #{exception.message}"
+            end
+            break
           else
-            previous_archive ||= OpenStax::Content::Archive.new version: previous_version
-
-            retry_book = OpenStax::Content::Book.new(
+            previous_archive = OpenStax::Content::Archive.new version: previous_version
+            book = OpenStax::Content::Book.new(
               archive: previous_archive,
               uuid: book.uuid,
               version: book.version,
@@ -75,15 +77,21 @@ class OpenStax::Content::Abl
               min_code_version: book.min_code_version,
               committed_at: book.committed_at
             )
-
-            # If the book requires an archive version that hasn't finished building yet, don't include it
-            retry_books << retry_book if retry_book.valid?
+            # NOTE: This assumes that subsequent archive versions are invalid
+            # after finding one invalid archive versions
+            unless book.valid?
+              raise exception unless allow_partial_data
+              @partial_data = true
+              OpenStax::Content::logger.warn do
+                "Failed to process book: #{book.uuid}. " \
+                "Error: invalid book for archive version #{previous_version}"
+              end
+              break
+            end
           end
+          attempt += 1
         end
       end
-
-      books = retry_books
-      attempt += 1
     end
   end
 
